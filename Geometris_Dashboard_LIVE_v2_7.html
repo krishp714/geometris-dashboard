@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>VisionQube — Camera Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--bg4:#30363d;
+--card:#161b22;--card2:#1c2128;
+--b1:#21262d;--b2:#30363d;--b3:#484f58;
+--blue:#58a6ff;--blue2:#79c0ff;--blue3:#388bfd;
+--green:#3fb950;--green2:#56d364;
+--amber:#e3b341;--amber2:#f0c842;
+--purple:#d2a8ff;--purple2:#bc8cff;
+--red:#f47067;--teal:#39d353;--orange:#fb923c;
+--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;
+--font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+--r:8px;--r2:12px;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;line-height:1.5;height:100vh;overflow:hidden;display:flex}
+.sb{width:200px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--b1);display:flex;flex-direction:column;height:100vh}
+.sb-logo{padding:18px 16px 14px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:10px}
+.sb-logo-icon{width:28px;height:28px;background:linear-gradient(135deg,var(--blue3),var(--purple2));border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.sb-logo-text{font-size:13px;font-weight:700;color:var(--text);letter-spacing:-.2px}
+.sb-logo-sub{font-size:10px;color:var(--text3);letter-spacing:.3px;text-transform:uppercase}
+.sb-nav{padding:10px 8px;flex:1;display:flex;flex-direction:column;gap:2px}
+.sb-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--r);cursor:pointer;color:var(--text2);font-size:12px;font-weight:500;transition:all .12s;position:relative;border:1px solid transparent;user-select:none}
+.sb-item:hover{background:var(--bg3);color:var(--text)}
+.sb-item.on{background:rgba(56,139,253,.12);border-color:rgba(56,139,253,.3);color:var(--blue2)}
+.sb-item.on::before{content:'';position:absolute;left:0;top:20%;height:60%;width:2px;background:var(--blue3);border-radius:0 2px 2px 0}
+.sb-icon{font-size:14px;width:18px;text-align:center}
+.sb-foot{padding:12px;border-top:1px solid var(--b1)}
+.sb-pill{background:var(--bg3);border:1px solid var(--b2);border-radius:6px;padding:7px 10px;font-size:10px;color:var(--text3)}
+.sb-pill strong{color:var(--green);display:block;font-size:11px;margin-bottom:1px}
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.page{display:none;flex-direction:column;height:100%;overflow:hidden}
+.page.on{display:flex}
+.ph{padding:14px 24px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--b1);flex-shrink:0;gap:12px;flex-wrap:wrap}
+.ph-left .ph-title{font-size:18px;font-weight:700;letter-spacing:-.4px;color:var(--text)}
+.ph-left .ph-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.ph-ctrls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pb{flex:1;overflow-y:auto;padding:14px 24px 24px;display:flex;flex-direction:column;gap:12px}
+.ctrl-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ctrl-label{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--text3);white-space:nowrap}
+select,input[type=text],input[type=search]{background:var(--bg3);border:1px solid var(--b2);color:var(--text);border-radius:var(--r);font-family:var(--font);font-size:12px;padding:6px 10px;outline:none;transition:border-color .12s;cursor:pointer}
+select:focus,input:focus{border-color:var(--blue3)}
+input[type=range]{-webkit-appearance:none;height:3px;background:var(--bg3);border:none;border-radius:2px;cursor:pointer;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--blue3);border:2px solid var(--bg)}
+.rval{font-size:12px;font-weight:600;color:var(--blue2);font-family:var(--mono);min-width:60px}
+.pills{display:flex;gap:3px}
+.pill{padding:5px 10px;border-radius:20px;border:1px solid var(--b2);background:transparent;color:var(--text2);font-size:11px;font-weight:500;cursor:pointer;transition:all .12s;font-family:var(--font)}
+.pill.on,.pill:hover{background:var(--blue3);border-color:var(--blue3);color:#fff}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--r);border:1px solid var(--b2);background:var(--bg3);color:var(--text2);font-size:11px;font-weight:500;cursor:pointer;transition:all .12s;font-family:var(--font)}
+.btn:hover{border-color:var(--blue3);color:var(--blue2)}
+.krow{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;flex-shrink:0}
+.kcard{background:var(--card);border:1px solid var(--b1);border-radius:var(--r2);padding:12px 16px;position:relative;overflow:hidden}
+.kcard::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--kc,var(--blue3))}
+.kcard .kl{font-size:10px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
+.kcard .kv{font-size:20px;font-weight:700;letter-spacing:-.5px;color:var(--kc,var(--blue2))}
+.kcard .ks{font-size:10px;color:var(--text3);margin-top:2px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.panel{background:var(--card);border:1px solid var(--b1);border-radius:var(--r2);padding:14px;display:flex;flex-direction:column;gap:10px}
+.panel-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.panel-title{font-size:13px;font-weight:600;color:var(--text);letter-spacing:-.2px}
+.panel-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;background:rgba(56,139,253,.15);color:var(--blue2);margin-left:auto;white-space:nowrap}
+.panel-badge.teal{background:rgba(63,185,80,.15);color:var(--green)}
+.panel-badge.amber{background:rgba(227,179,65,.15);color:var(--amber)}
+.panel-badge.red{background:rgba(244,112,103,.15);color:var(--red)}
+.panel-badge.orange{background:rgba(251,146,60,.15);color:var(--orange)}
+.cw{position:relative;width:100%}
+/* GLOBAL THRESHOLD BANNER */
+.gthr-bar{background:rgba(56,139,253,.07);border-top:1px solid rgba(56,139,253,.2);border-bottom:1px solid rgba(56,139,253,.2);padding:7px 24px;display:flex;align-items:center;gap:14px;flex-shrink:0;overflow:hidden;flex-wrap:nowrap}
+.gthr-label{font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--blue2);white-space:nowrap;display:flex;align-items:center;gap:5px}
+.gthr-note{font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* INFO CALLOUT */
+.callout{border-radius:var(--r);padding:10px 14px;display:flex;align-items:flex-start;gap:10px;font-size:11px}
+.callout.info{background:rgba(56,139,253,.08);border:1px solid rgba(56,139,253,.2);color:var(--blue2)}
+.callout.warn{background:rgba(227,179,65,.08);border:1px solid rgba(227,179,65,.2);color:var(--amber)}
+.callout.danger{background:rgba(244,112,103,.08);border:1px solid rgba(244,112,103,.2);color:var(--red)}
+.callout-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+/* TABLE */
+.tw{border-radius:var(--r);border:1px solid var(--b1);overflow:auto;max-height:280px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{background:var(--bg3);color:var(--text3);font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;padding:7px 12px;text-align:left;position:sticky;top:0;z-index:2;border-bottom:1px solid var(--b1);cursor:pointer;white-space:nowrap;user-select:none}
+thead th:hover{color:var(--blue2)}
+thead th.sorted{color:var(--blue2)}
+tbody tr{border-bottom:1px solid rgba(33,38,45,.6);transition:background .08s}
+tbody tr:hover{background:rgba(56,139,253,.05)}
+tbody td{padding:6px 12px;color:var(--text)}
+td.dim{color:var(--text3)}
+td.mono{font-family:var(--mono);font-size:11px;color:var(--text2)}
+.badge{display:inline-block;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:600}
+.bg{background:rgba(63,185,80,.15);color:var(--green)}
+.ba{background:rgba(227,179,65,.15);color:var(--amber)}
+.br{background:rgba(244,112,103,.15);color:var(--red)}
+.bb{background:rgba(88,166,255,.15);color:var(--blue2)}
+.bo{background:rgba(251,146,60,.15);color:var(--orange)}
+.tbl-empty{text-align:center;padding:28px;color:var(--text3)}
+.srch{position:relative}
+.srch input{padding-left:28px;width:180px}
+.srch::before{content:'⌕';position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:14px;pointer-events:none}
+.srch .clr{position:absolute;right:7px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;font-size:15px;line-height:1;padding:0}
+.srch .clr:hover{color:var(--text)}
+.gauge{display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--b1);border-radius:var(--r);padding:9px 12px}
+.gauge-bar-bg{flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;min-width:60px}
+.gauge-bar{height:100%;border-radius:3px;background:var(--green);transition:width .35s cubic-bezier(.4,0,.2,1)}
+.legend{display:flex;flex-wrap:wrap;gap:8px}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.legend-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+/* OUTLIER SPECIFIC */
+.iqr-fence{background:var(--bg3);border-radius:var(--r);padding:10px 14px;display:flex;gap:20px;flex-wrap:wrap}
+.iqr-stat{display:flex;flex-direction:column;gap:2px}
+.iqr-stat-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px}
+.iqr-stat-val{font-size:14px;font-weight:700;font-family:var(--mono);color:var(--text)}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
+#toast{position:fixed;bottom:20px;right:20px;background:var(--card2);border:1px solid var(--b2);border-radius:var(--r);padding:10px 16px;font-size:12px;color:var(--text);z-index:999;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none}
+#toast.show{opacity:1;transform:translateY(0)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.page.on .kcard{animation:fadeUp .22s ease both}
+.page.on .kcard:nth-child(1){animation-delay:.03s}
+.page.on .kcard:nth-child(2){animation-delay:.07s}
+.page.on .kcard:nth-child(3){animation-delay:.11s}
+.page.on .kcard:nth-child(4){animation-delay:.15s}
+.page.on .kcard:nth-child(5){animation-delay:.19s}
+</style>
+</head>
+<body>
+<aside class="sb">
+  <div class="sb-logo">
+    <div class="sb-logo-icon">📡</div>
+    <div><div class="sb-logo-text">VisionQube</div><div class="sb-logo-sub">Camera Analytics</div></div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-item on" onclick="go('summary')"><span class="sb-icon">◼</span>Summary</div>
+    <div class="sb-item" onclick="go('threshold')"><span class="sb-icon">📶</span>Usage Threshold</div>
+    <div class="sb-item" onclick="go('cost')"><span class="sb-icon">💰</span>Cost Breakdown</div>
+    <div class="sb-item" onclick="go('ship')"><span class="sb-icon">🚢</span>Ship Filter</div>
+    <div class="sb-item" onclick="go('device')"><span class="sb-icon">🔍</span>Device Analysis</div>
+    <div class="sb-item" onclick="go('outlier')"><span class="sb-icon">⚠️</span>Outlier Detection</div>
+  </nav>
+  <div class="sb-foot">
+    <div class="sb-pill"><strong>Mar + Apr 2026</strong>981 records · 50 customers</div>
+  </div>
+</aside>
+<main class="main">
+
+<!-- ══════════════════════════════════════
+     PAGE 1 — SUMMARY
+══════════════════════════════════════ -->
+<section class="page on" id="p-summary">
+<div class="ph">
+  <div class="ph-left"><div class="ph-title">Executive Summary</div><div class="ph-sub">Consolidated billing · March &amp; April 2026</div></div>
+  <div class="ph-ctrls">
+    <span class="ctrl-label">Month</span>
+    <select id="s-month" onchange="rSum()"><option value="all">All Months</option><option value="March 2026">March 2026</option><option value="April 2026">April 2026</option></select>
+    <span class="ctrl-label">From</span>
+    <select id="s-from" onchange="rSum()"><option value="">Any</option></select>
+    <span class="ctrl-label">To</span>
+    <select id="s-to" onchange="rSum()"><option value="">Any</option></select>
+    <button class="btn" onclick="clrDateRange('s-from','s-to',rSum)">✕</button>
+    <span class="ctrl-label">Top N</span>
+    <div class="pills" id="s-topn-pills">
+      <button class="pill" onclick="sTopN(5,this)">5</button>
+      <button class="pill on" onclick="sTopN(10,this)">10</button>
+      <button class="pill" onclick="sTopN(20,this)">20</button>
+      <button class="pill" onclick="sTopN(999,this)">All</button>
+    </div>
+  </div>
+</div>
+<div class="gthr-bar">
+    <span class="gthr-label">🌐 Global Threshold</span>
+    <input type="range" id="g-slider" min="0" max="4096" step="10" value="0" oninput="onGT(this.value)" style="width:160px;flex-shrink:0"/>
+    <span class="rval" id="g-val" style="min-width:70px">0 MB</span>
+    <span class="gthr-note">Devices at or below this value excluded from Summary calculations</span>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0">
+      <span style="font-size:10px;color:var(--text3)">Excluded:</span>
+      <span style="font-size:13px;font-weight:700;color:var(--amber);font-family:var(--mono)" id="g-excl-n">0</span>
+      <span style="font-size:10px;color:var(--text3)" id="g-excl-of">of 0 devices</span>
+    </div>
+  </div>
+<div class="pb">
+  <div class="krow" id="s-kpis"></div>
+  <div class="g2">
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">Billable Total by Customer</span><span class="panel-badge" id="s-topn-lbl">Top 10</span></div>
+      <div class="cw" style="height:280px"><canvas id="sBarC"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">Revenue Composition</span></div>
+      <div class="cw" style="height:210px"><canvas id="sPieC"></canvas></div>
+      <div class="legend" id="sPieLeg"></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><span class="panel-title">Top Customers — Billable Total</span><span style="margin-left:auto;font-size:11px;color:var(--text3)" id="s-tbl-note"></span></div>
+    <div class="tw"><table id="sTbl">
+      <thead><tr>
+        <th onclick="sort('sTbl',0,this)"># ↕</th>
+        <th onclick="sort('sTbl',1,this)">Customer ↕</th>
+        <th onclick="sort('sTbl',2,this)">SIMs ↕</th>
+        <th onclick="sort('sTbl',3,this)">Billable API ↕</th>
+        <th onclick="sort('sTbl',4,this)">Billable Usage ↕</th>
+        <th onclick="sort('sTbl',5,this)">Data Fwd ↕</th>
+        <th onclick="sort('sTbl',6,this)">Billable Total ↕</th>
+        <th>Share</th>
+      </tr></thead>
+      <tbody id="sTblB"></tbody>
+    </table></div>
+  </div>
+
+  <!-- ── CUSTOMER AVG USAGE RANKING ── -->
+  <div class="g2">
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">Customers Ranked by Avg Usage / Device</span>
+        <span class="panel-badge teal">threshold-aware</span>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Average MB per device per customer — uses Global Threshold above. Small customers with high avg usage are flagged 🔴</div>
+      <div class="cw" style="height:280px"><canvas id="sAvgBarC"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">Threshold Analysis</span>
+        <span class="panel-badge red" id="s-alert-badge">0 alerts</span>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Flags customers whose avg usage exceeds the global threshold — particularly notable when a small customer (few SIMs) is using disproportionately high data</div>
+      <div class="tw" style="max-height:260px"><table id="sThrTbl">
+        <thead><tr>
+          <th onclick="sort('sThrTbl',0,this)"># ↕</th>
+          <th onclick="sort('sThrTbl',1,this)">Customer ↕</th>
+          <th onclick="sort('sThrTbl',2,this)">SIMs ↕</th>
+          <th onclick="sort('sThrTbl',3,this)">Avg MB/Device ↕</th>
+          <th onclick="sort('sThrTbl',4,this)">Total MB ↕</th>
+          <th onclick="sort('sThrTbl',5,this)">Billable ↕</th>
+          <th>Alert</th>
+        </tr></thead>
+        <tbody id="sThrTblB"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ── THRESHOLD CHART ── -->
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">Avg Usage per Device vs Threshold</span>
+      <span class="panel-badge amber">red line = threshold</span>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Each bar = one customer's average MB per device. The red line shows the Global Threshold. Bars above the line are potential data usage concerns.</div>
+    <div class="cw" style="height:260px"><canvas id="sThrLineC"></canvas></div>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════
+     PAGE 2 — USAGE THRESHOLD
+══════════════════════════════════════ -->
+<section class="page" id="p-threshold">
+<div class="ph">
+  <div class="ph-left"><div class="ph-title">Usage Threshold</div><div class="ph-sub">Per-page independent threshold · threshold-aware calculations</div></div>
+  <div class="ph-ctrls">
+    <span class="ctrl-label">Month</span>
+    <select id="t-month" onchange="rThr()"><option value="all">All</option><option value="March 2026">March</option><option value="April 2026">April</option></select>
+    <span class="ctrl-label">Customer</span>
+    <select id="t-cust" onchange="rThr()"><option value="all">All Customers</option></select>
+    <span class="ctrl-label">From</span>
+    <select id="t-from" onchange="rThr()"><option value="">Any</option></select>
+    <span class="ctrl-label">To</span>
+    <select id="t-to" onchange="rThr()"><option value="">Any</option></select>
+    <button class="btn" onclick="clrDateRange('t-from','t-to',rThr)">✕</button>
+  </div>
+</div>
+<div class="pb">
+  <!-- CALLOUT: global threshold does not apply here -->
+  <div class="callout info">
+    <span class="callout-icon">ℹ️</span>
+    <div><strong>Note:</strong> The Global Usage Threshold set on the Summary page does <strong>not</strong> apply here. This page uses its own independent threshold slider below, so you can explore usage exclusions separately without affecting the Summary view.</div>
+  </div>
+  <div class="panel" style="flex-shrink:0">
+    <div class="panel-head"><span class="panel-title">Threshold (MB)</span><span class="panel-badge amber" id="t-excl-lbl">0 excluded</span></div>
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:260px">
+        <input type="range" id="t-slider" min="0" max="4096" step="10" value="0" oninput="onTS(this.value)" style="flex:1"/>
+        <span class="rval" id="t-val">0 MB</span>
+      </div>
+      <div class="gauge" style="flex:1;min-width:180px">
+        <span style="font-size:11px;color:var(--text3);white-space:nowrap">Devices included</span>
+        <div class="gauge-bar-bg"><div class="gauge-bar" id="t-gauge" style="width:100%"></div></div>
+        <span class="rval" id="t-pct">100%</span>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div class="ctrl-label">Excluded</div>
+        <div style="font-size:20px;font-weight:700;color:var(--amber);font-family:var(--mono)" id="t-excl-n">0</div>
+        <div style="font-size:10px;color:var(--text3)" id="t-total-lbl">of 0 records</div>
+      </div>
+    </div>
+  </div>
+  <div class="krow" id="t-kpis"></div>
+  <div class="g2">
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">Avg Usage per Device by Customer</span><span class="panel-badge teal">threshold-aware</span></div>
+      <div class="cw" style="height:250px"><canvas id="tBarC"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">Billable Total</span></div>
+      <div class="cw" style="height:200px"><canvas id="tPieC"></canvas></div>
+      <div class="legend" id="tPieLeg"></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><span class="panel-title">Device Detail</span><span style="margin-left:auto;font-size:11px;color:var(--text3)" id="t-dev-ct"></span></div>
+    <div class="tw"><table id="tTbl">
+      <thead><tr>
+        <th onclick="sort('tTbl',0,this)"># ↕</th>
+        <th onclick="sort('tTbl',1,this)">Customer ↕</th>
+        <th onclick="sort('tTbl',2,this)">Device ↕</th>
+        <th onclick="sort('tTbl',3,this)">ICCID ↕</th>
+        <th onclick="sort('tTbl',4,this)">Usage (MB) ↕</th>
+        <th onclick="sort('tTbl',5,this)">Billable ↕</th>
+        <th>Status</th>
+      </tr></thead>
+      <tbody id="tTblB"></tbody>
+    </table></div>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════
+     PAGE 3 — COST BREAKDOWN
+══════════════════════════════════════ -->
+<section class="page" id="p-cost">
+<div class="ph">
+  <div class="ph-left"><div class="ph-title">Cost Breakdown</div><div class="ph-sub">Billable revenue by period, customer, and category</div></div>
+  <div class="ph-ctrls">
+    <div class="pills" id="c-month-pills">
+      <button class="pill on" onclick="setCM('all',this)">All</button>
+      <button class="pill" onclick="setCM('March 2026',this)">March</button>
+      <button class="pill" onclick="setCM('April 2026',this)">April</button>
+    </div>
+    <span class="ctrl-label">Customer</span>
+    <select id="c-cust" onchange="rCost()"><option value="all">All Customers</option></select>
+    <span class="ctrl-label">From</span>
+    <select id="c-from" onchange="rCost()"><option value="">Any</option></select>
+    <span class="ctrl-label">To</span>
+    <select id="c-to" onchange="rCost()"><option value="">Any</option></select>
+    <button class="btn" onclick="clrDateRange('c-from','c-to',rCost)">✕</button>
+    <span class="ctrl-label">Top N</span>
+    <div class="pills" id="c-topn-pills">
+      <button class="pill" onclick="setCTopN(5,this)">5</button>
+      <button class="pill on" onclick="setCTopN(10,this)">10</button>
+      <button class="pill" onclick="setCTopN(20,this)">20</button>
+      <button class="pill" onclick="setCTopN(999,this)">All</button>
+    </div>
+  </div>
+</div>
+<div class="pb">
+  <div class="krow" id="c-kpis"></div>
+  <div class="g2">
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">Billable Composition</span></div>
+      <div class="cw" style="height:210px"><canvas id="cPieC"></canvas></div>
+      <div class="legend" id="cPieLeg"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">Month over Month</span></div>
+      <div class="cw" style="height:210px"><canvas id="cMomC"></canvas></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><span class="panel-title">Top Customers — Billable Total</span><span class="panel-badge" id="c-topn-lbl">Top 10</span></div>
+    <div class="tw"><table id="cTbl">
+      <thead><tr>
+        <th>#</th>
+        <th onclick="sort('cTbl',1,this)">Customer ↕</th>
+        <th onclick="sort('cTbl',2,this)">SIMs ↕</th>
+        <th onclick="sort('cTbl',3,this)">Billable API ↕</th>
+        <th onclick="sort('cTbl',4,this)">Billable Usage ↕</th>
+        <th onclick="sort('cTbl',5,this)">Billable Data Fwd ↕</th>
+        <th onclick="sort('cTbl',6,this)">Billable Total ↕</th>
+        <th>Share</th>
+      </tr></thead>
+      <tbody id="cTblB"></tbody>
+    </table></div>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════
+     PAGE 4 — SHIP FILTER
+══════════════════════════════════════ -->
+<section class="page" id="p-ship">
+<div class="ph">
+  <div class="ph-left"><div class="ph-title">Ship Date Filter</div><div class="ph-sub">Complete master data — March &amp; April 2026</div></div>
+  <div class="ph-ctrls">
+    <span class="ctrl-label">Customer</span>
+    <select id="sh-cust" onchange="rShip()"><option value="all">All Customers</option></select>
+    <span class="ctrl-label">From</span>
+    <select id="sh-from" onchange="rShip()"><option value="">Any</option></select>
+    <span class="ctrl-label">To</span>
+    <select id="sh-to" onchange="rShip()"><option value="">Any</option></select>
+    <button class="btn" onclick="clrShip()">✕ Clear</button>
+  </div>
+</div>
+<div class="pb">
+  <div class="krow" id="sh-kpis"></div>
+  <div class="g2">
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">Devices Shipped by Date</span></div>
+      <div class="cw" style="height:230px"><canvas id="shTimeC"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">Devices by Customer</span></div>
+      <div class="cw" style="height:230px"><canvas id="shCustC"></canvas></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><span class="panel-title">Device Shipment Records</span><span style="margin-left:auto;font-size:11px;color:var(--text3)" id="sh-ct"></span></div>
+    <div class="tw"><table id="shTbl">
+      <thead><tr>
+        <th onclick="sort('shTbl',0,this)">Customer ↕</th>
+        <th onclick="sort('shTbl',1,this)">Device ↕</th>
+        <th onclick="sort('shTbl',2,this)">ICCID ↕</th>
+        <th onclick="sort('shTbl',3,this)">Ship Date ↕</th>
+        <th onclick="sort('shTbl',4,this)">Usage (MB) ↕</th>
+      </tr></thead>
+      <tbody id="shTblB"></tbody>
+    </table></div>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════
+     PAGE 5 — DEVICE ANALYSIS
+══════════════════════════════════════ -->
+<section class="page" id="p-device">
+<div class="ph">
+  <div class="ph-left"><div class="ph-title">Device Usage Analysis</div><div class="ph-sub">Search by Serial, Customer, or ICCID · threshold-aware</div></div>
+</div>
+<div class="pb">
+  <div class="ctrl-row">
+    <span class="ctrl-label">Month</span>
+    <select id="d-month" onchange="rDev()"><option value="all">All</option><option value="March 2026">March</option><option value="April 2026">April</option></select>
+    <span class="ctrl-label">Customer</span>
+    <select id="d-cust" onchange="rDev()"><option value="all">All Customers</option></select>
+    <span class="ctrl-label">From</span>
+    <select id="d-from" onchange="rDev()"><option value="">Any</option></select>
+    <span class="ctrl-label">To</span>
+    <select id="d-to" onchange="rDev()"><option value="">Any</option></select>
+    <button class="btn" onclick="clrDateRange('d-from','d-to',rDev)">✕</button>
+    <span class="ctrl-label">Threshold (MB)</span>
+    <input type="range" id="d-slider" min="0" max="4096" step="10" value="0" oninput="onDS(this.value)" style="width:130px"/>
+    <span class="rval" id="d-thr">0 MB</span>
+  </div>
+  <div class="ctrl-row">
+    <span class="ctrl-label">Serial</span>
+    <div class="srch"><input type="search" id="d-serial" placeholder="Device serial…" oninput="rDev()"/><button class="clr" onclick="clrF('d-serial')">×</button></div>
+    <span class="ctrl-label">ICCID</span>
+    <div class="srch"><input type="search" id="d-iccid" placeholder="ICCID…" oninput="rDev()"/><button class="clr" onclick="clrF('d-iccid')">×</button></div>
+    <button class="btn" onclick="clrAllDev()">✕ Reset All</button>
+  </div>
+  <div class="krow" id="d-kpis"></div>
+  <div class="g2">
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">Usage Distribution</span><span class="panel-badge teal">threshold-aware</span></div>
+      <div class="cw" style="height:220px"><canvas id="dHistC"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">Total &amp; Avg Usage by Customer</span><span class="panel-badge teal">consolidated</span></div>
+      <div class="cw" style="height:220px"><canvas id="dCustC"></canvas></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">Device Records</span>
+      <span style="font-size:11px;color:var(--text3);margin-left:8px" id="d-ct"></span>
+      <button class="btn" style="margin-left:auto;font-size:11px;padding:4px 10px" onclick="clrAllDev()">Reset View</button>
+    </div>
+    <div class="tw"><table id="dTbl">
+      <thead><tr>
+        <th onclick="sort('dTbl',0,this)">Customer ↕</th>
+        <th onclick="sort('dTbl',1,this)">Device (Serial) ↕</th>
+        <th onclick="sort('dTbl',2,this)">ICCID ↕</th>
+        <th onclick="sort('dTbl',3,this)">Month ↕</th>
+        <th onclick="sort('dTbl',4,this)">Usage (MB) ↕</th>
+        <th onclick="sort('dTbl',5,this)">Billable ↕</th>
+        <th onclick="sort('dTbl',6,this)">Ship Date ↕</th>
+        <th>Status</th>
+      </tr></thead>
+      <tbody id="dTblB"></tbody>
+    </table></div>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════
+     PAGE 6 — OUTLIER DETECTION
+══════════════════════════════════════ -->
+<section class="page" id="p-outlier">
+<div class="ph">
+  <div class="ph-left"><div class="ph-title">Outlier Detection</div><div class="ph-sub">IQR method · 1.5 × IQR fences · exclusion threshold · date range filter</div></div>
+  <div class="ph-ctrls">
+    <span class="ctrl-label">Month</span>
+    <select id="o-month" onchange="rOut()"><option value="all">All</option><option value="March 2026">March</option><option value="April 2026">April</option></select>
+    <span class="ctrl-label">Customer</span>
+    <select id="o-cust" onchange="rOut()"><option value="all">All Customers</option></select>
+    <span class="ctrl-label">Show</span>
+    <div class="pills" id="o-show-pills">
+      <button class="pill on" onclick="setOShow('all',this)">All</button>
+      <button class="pill" onclick="setOShow('high',this)">High Only</button>
+      <button class="pill" onclick="setOShow('low',this)">Low Only</button>
+      <button class="pill" onclick="setOShow('outlier',this)">Outliers Only</button>
+    </div>
+  </div>
+</div>
+<div class="pb">
+  <!-- EXCLUSION THRESHOLD + DATE RANGE CONTROLS -->
+  <div class="panel" style="flex-shrink:0">
+    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+      <!-- Exclusion threshold -->
+      <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:260px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="ctrl-label">Exclusion Threshold (MB)</span>
+          <span class="panel-badge amber" id="o-excl-badge">0 excluded</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <input type="range" id="o-slider" min="0" max="4096" step="10" value="0" oninput="onOT(this.value)" style="flex:1"/>
+          <span class="rval" id="o-thr-val">0 MB</span>
+        </div>
+        <div style="font-size:10px;color:var(--text3)">Devices at or below this value are excluded before IQR is calculated — keeps zero/inactive devices from skewing the analysis</div>
+      </div>
+      <!-- Date range -->
+      <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+        <span class="ctrl-label">Ship Date Range</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:11px;color:var(--text3)">From</span>
+          <select id="o-from" onchange="rOut()" style="font-size:11px;padding:4px 8px"><option value="">Any</option></select>
+          <span style="font-size:11px;color:var(--text3)">To</span>
+          <select id="o-to" onchange="rOut()" style="font-size:11px;padding:4px 8px"><option value="">Any</option></select>
+          <button class="btn" onclick="clrOutFilters()" style="font-size:11px;padding:4px 9px">✕ Clear</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="callout warn">
+    <span class="callout-icon">📊</span>
+    <div><strong>IQR Outlier Method:</strong> For each device's usage (MB), we compute Q1 (25th percentile), Q3 (75th percentile), and IQR = Q3 − Q1. Devices below <strong>Q1 − 1.5 × IQR</strong> are flagged as low outliers. Devices above <strong>Q3 + 1.5 × IQR</strong> are flagged as high outliers. Normal devices fall within the fences. The exclusion threshold removes low/zero-usage devices <em>before</em> IQR is computed.</div>
+  </div>
+  <!-- IQR stats bar -->
+  <div class="iqr-fence" id="o-fence-bar">
+    <div class="iqr-stat"><div class="iqr-stat-lbl">Q1 (25th pct)</div><div class="iqr-stat-val" id="o-q1">—</div></div>
+    <div class="iqr-stat"><div class="iqr-stat-lbl">Median</div><div class="iqr-stat-val" id="o-med">—</div></div>
+    <div class="iqr-stat"><div class="iqr-stat-lbl">Q3 (75th pct)</div><div class="iqr-stat-val" id="o-q3">—</div></div>
+    <div class="iqr-stat"><div class="iqr-stat-lbl">IQR</div><div class="iqr-stat-val" id="o-iqr">—</div></div>
+    <div class="iqr-stat" style="border-left:1px solid var(--b2);padding-left:20px"><div class="iqr-stat-lbl" style="color:var(--blue2)">Lower Fence</div><div class="iqr-stat-val" style="color:var(--blue2)" id="o-low-f">—</div></div>
+    <div class="iqr-stat"><div class="iqr-stat-lbl" style="color:var(--red)">Upper Fence</div><div class="iqr-stat-val" style="color:var(--red)" id="o-high-f">—</div></div>
+    <div class="iqr-stat" style="margin-left:auto"><div class="iqr-stat-lbl" style="color:var(--red)">High Outliers</div><div class="iqr-stat-val" style="color:var(--red)" id="o-n-high">—</div></div>
+    <div class="iqr-stat"><div class="iqr-stat-lbl" style="color:var(--orange)">Low Outliers</div><div class="iqr-stat-val" style="color:var(--orange)" id="o-n-low">—</div></div>
+  </div>
+  <div class="krow" id="o-kpis"></div>
+  <div class="g2">
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">Usage Distribution with Fences</span><span class="panel-badge red">IQR fences shown</span></div>
+      <div class="cw" style="height:250px"><canvas id="oScatC"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">Outliers by Customer</span></div>
+      <div class="cw" style="height:250px"><canvas id="oCustC"></canvas></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">Device Outlier Report</span>
+      <span class="panel-badge red" id="o-count-badge">0 outliers</span>
+      <span style="margin-left:8px;font-size:11px;color:var(--text3)" id="o-ct"></span>
+    </div>
+    <div class="tw"><table id="oTbl">
+      <thead><tr>
+        <th onclick="sort('oTbl',0,this)">Customer ↕</th>
+        <th onclick="sort('oTbl',1,this)">Device ↕</th>
+        <th onclick="sort('oTbl',2,this)">ICCID ↕</th>
+        <th onclick="sort('oTbl',3,this)">Month ↕</th>
+        <th onclick="sort('oTbl',4,this)">Ship Date ↕</th>
+        <th onclick="sort('oTbl',5,this)">Usage (MB) ↕</th>
+        <th onclick="sort('oTbl',6,this)">vs. Median ↕</th>
+        <th>Classification</th>
+        <th>Fence</th>
+      </tr></thead>
+      <tbody id="oTblB"></tbody>
+    </table></div>
+  </div>
+</div>
+</section>
+
+</main>
+<div id="toast"></div>
+<script>
+
+// ═══════════════════════════════════════════════════
+// LIVE GOOGLE SHEETS CONFIG
+// ═══════════════════════════════════════════════════
+const API_KEY = "AIzaSyBmSjCvt5PDeWQ3N3M8p6y7kOqCaQhpUpM";
+const SHEETS = [
+  { id: "1PqDib2sIw4IMd8_lvvTJB5oehEVYEsyKZUS9guA1O6c", month: "March 2026", monthNum: 3 },
+  { id: "1DC4JIVRZhr52srN_YQuNIvkoCZnmzFRfzJNZVxnjUyw", month: "April 2026", monthNum: 4 },
+];
+
+let CHARGES = [];
+let INVOICE = [];
+
+// ── FETCH FROM GOOGLE SHEETS ──────────────────────
+async function fetchSheet(sheetId, sheetName) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(sheetName)}?key=${API_KEY}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to fetch ${sheetName} from ${sheetId}: ${res.status}`);
+  const data = await res.json();
+  return data.values || [];
+}
+
+function rowsToObjects(rows) {
+  if (!rows.length) return [];
+  const headers = rows[0].map(h => h.trim());
+  return rows.slice(1).map(row => {
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = row[i] || '');
+    return obj;
+  });
+}
+
+async function loadAllData() {
+  CHARGES = []; INVOICE = [];
+  
+  for (const sheet of SHEETS) {
+    try {
+      // Load Charges
+      const chargeRows = await fetchSheet(sheet.id, 'Charges');
+      const chargeObjs = rowsToObjects(chargeRows);
+      chargeObjs.forEach(r => {
+        if (!r['Device'] && !r['Customer']) return;
+        CHARGES.push({
+          Customer: String(r['Customer'] || '').trim(),
+          Device: String(r['Device'] || '').trim(),
+          ICCID: String(r['ICCID'] || '').trim(),
+          'SIM Status': String(r['SIM Status'] || '').trim(),
+          'Ship Date': String(r['Ship Date'] || '').trim(),
+          'Usage (MB)': parseFloat(r['Usage (MB)']) || 0,
+          'API Cost': parseFloat(r['API Cost']) || 0,
+          'Usage Cost': parseFloat(r['Usage Cost']) || 0,
+          'Data Forwarding': parseFloat(r['Data Forwarding']) || 0,
+          Total: parseFloat(r['Total']) || 0,
+          Month: sheet.month,
+          Month_Num: sheet.monthNum,
+        });
+      });
+
+      // Load Invoice
+      const invRows = await fetchSheet(sheet.id, 'Invoice');
+      let capture = false;
+      for (const row of invRows) {
+        if (row.some(v => String(v).trim() === 'Customer')) { capture = true; continue; }
+        if (capture) {
+          const cust = String(row[1] || '').trim();
+          if (!cust || ['Total', 'Total:', ''].includes(cust)) break;
+          INVOICE.push({
+            Month: sheet.month,
+            Month_Num: sheet.monthNum,
+            Customer: cust,
+            SIMs: parseInt(row[2]) || 0,
+            'API Cost': parseFloat(row[3]) || 0,
+            'Usage Cost': parseFloat(row[4]) || 0,
+            'Data Forwarding': parseFloat(row[5]) || 0,
+            'Billable Total': parseFloat(row[6]) || 0,
+          });
+        }
+      }
+    } catch(e) {
+      console.error('Error loading', sheet.month, e);
+      showLoadError(sheet.month + ': ' + e.message);
+    }
+  }
+}
+
+function showLoadError(msg) {
+  const el = document.getElementById('load-error');
+  if (el) { el.textContent = '⚠️ ' + msg; el.style.display = 'block'; }
+}
+
+// ── LOADING OVERLAY ───────────────────────────────
+function showSpinner(show) {
+  document.getElementById('spinner').style.display = show ? 'flex' : 'none';
+}
+
+
+const COLS=['#388bfd','#3fb950','#e3b341','#f47067','#d2a8ff','#39d353','#fb923c','#60a5fa','#f472b6','#4ade80','#fbbf24','#818cf8','#2dd4bf','#f87171','#c084fc'];
+const $=id=>document.getElementById(id);
+const f$=v=>'$'+Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fMB=v=>Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' MB';
+const fN=v=>Number(v).toLocaleString('en-US');
+const charts={};
+
+function mkC(id,cfg){if(charts[id])charts[id].destroy();const el=$(id);if(!el)return null;charts[id]=new Chart(el,cfg);return charts[id];}
+const BASE={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1c2128',titleColor:'#8b949e',bodyColor:'#e6edf3',borderColor:'#30363d',borderWidth:1,padding:10}}};
+
+function toast(m){const el=$('toast');el.textContent=m;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2200);}
+
+// ── NAV ──────────────────────────────────────────
+const PAGES=['summary','threshold','cost','ship','device','outlier'];
+const RENDERS={summary:rSum,threshold:rThr,cost:rCost,ship:rShip,device:rDev,outlier:rOut};
+function go(id){
+  PAGES.forEach(p=>{
+    $('p-'+p).classList.toggle('on',p===id);
+    document.querySelectorAll('.sb-item')[PAGES.indexOf(p)].classList.toggle('on',p===id);
+  });
+  if(RENDERS[id])RENDERS[id]();
+}
+
+// ── SORT ─────────────────────────────────────────
+const SS={};
+function sort(tid,col,th){
+  const k=tid+col;SS[k]=SS[k]==='asc'?'desc':'asc';
+  const dir=SS[k];
+  const tb=document.querySelector('#'+tid+' tbody');
+  const rows=[...tb.querySelectorAll('tr')];
+  rows.sort((a,b)=>{
+    const av=a.cells[col]?.dataset?.raw??a.cells[col]?.textContent??'';
+    const bv=b.cells[col]?.dataset?.raw??b.cells[col]?.textContent??'';
+    const an=parseFloat(av),bn=parseFloat(bv);
+    if(!isNaN(an)&&!isNaN(bn))return dir==='asc'?an-bn:bn-an;
+    return dir==='asc'?av.localeCompare(bv):bv.localeCompare(av);
+  });
+  document.querySelectorAll('#'+tid+' thead th').forEach(t=>t.classList.remove('sorted'));
+  th.classList.add('sorted');
+  rows.forEach(r=>tb.appendChild(r));
+}
+function dc(val,raw,cls=''){return`<td data-raw="${raw??val}" class="${cls}">${val}</td>`;}
+function pd(s){if(!s||s==='nan'||s==='')return 0;const[m,d,y]=s.split('/');return new Date(+y,+m-1,+d);}
+
+// ── DATE RANGE HELPERS ────────────────────────────
+function inRange(shipDate, from, to){
+  if(!from&&!to)return true;
+  const d=pd(shipDate);
+  if(!d)return true;
+  if(from&&d<pd(from))return false;
+  if(to&&d>pd(to))return false;
+  return true;
+}
+function clrDateRange(fromId,toId,renderFn){$(fromId).value='';$(toId).value='';renderFn();toast('Date range cleared');}
+
+// ── POPULATE SELECTS ─────────────────────────────
+function popSelects(){
+  const custs=[...new Set(CHARGES.map(r=>r.Customer))].sort();
+  ['t-cust','c-cust','sh-cust','d-cust','o-cust'].forEach(id=>{
+    const el=$(id);if(!el)return;
+    const cur=el.value;
+    while(el.options.length>1)el.remove(1);
+    custs.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;el.appendChild(o);});
+    if(cur)el.value=cur;
+  });
+  const dates=[...new Set(CHARGES.map(r=>r['Ship Date']).filter(d=>d&&d!='nan'&&d!=''))].sort((a,b)=>pd(a)-pd(b));
+  ['sh-from','sh-to','s-from','s-to','t-from','t-to','c-from','c-to','d-from','d-to','o-from','o-to'].forEach(id=>{
+    const el=$(id);if(!el)return;
+    while(el.options.length>1)el.remove(1);
+    dates.forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d;el.appendChild(o);});
+  });
+}
+
+// ── IQR HELPER ───────────────────────────────────
+function computeIQR(vals){
+  if(!vals.length)return{q1:0,med:0,q3:0,iqr:0,low:0,high:0};
+  const s=[...vals].sort((a,b)=>a-b);
+  const n=s.length;
+  const q1=s[Math.floor(n*0.25)];
+  const med=n%2?s[Math.floor(n/2)]:(s[n/2-1]+s[n/2])/2;
+  const q3=s[Math.floor(n*0.75)];
+  const iqr=q3-q1;
+  return{q1,med,q3,iqr,low:q1-1.5*iqr,high:q3+1.5*iqr};
+}
+
+// ── PAGE 1: SUMMARY ──────────────────────────────
+let sTopNv=10, globalThr=0;
+function onGT(v){
+  globalThr=+v;
+  $('g-val').textContent=v+' MB';
+  rSum();
+}
+function sTopN(n,btn){sTopNv=n;document.querySelectorAll('#s-topn-pills .pill').forEach(p=>p.classList.remove('on'));btn.classList.add('on');rSum();}
+
+function rSum(){
+  const month=$('s-month').value;
+  const from=$('s-from').value, to=$('s-to').value;
+  const inv=INVOICE.filter(r=>month==='all'||r.Month===month);
+  // Apply date range via CHARGES ship dates — flag customers with qualifying devices
+  const qualCusts=new Set(CHARGES.filter(r=>(month==='all'||r.Month===month)&&inRange(r['Ship Date'],from,to)).map(r=>r.Customer));
+  const invFiltered=(from||to)?inv.filter(r=>qualCusts.has(r.Customer)):inv;
+
+  // Apply global threshold via per-device aggregation from CHARGES
+  const devMap={};
+  CHARGES.filter(r=>month==='all'||r.Month===month).forEach(r=>{
+    const k=r.Device+'|'+r.Month;
+    if(!devMap[k])devMap[k]={cust:r.Customer,mb:0};
+    devMap[k].mb+=r['Usage (MB)']||0;
+  });
+  const allDevs=Object.values(devMap);
+  const exclDevs=allDevs.filter(d=>d.mb<=globalThr);
+  const exclCusts=new Set(exclDevs.map(d=>d.cust));
+  $('g-excl-n').textContent=exclDevs.length;
+  $('g-excl-of').textContent='of '+allDevs.length+' device records';
+
+  const bc={};
+  invFiltered.forEach(r=>{
+    if(!bc[r.Customer])bc[r.Customer]={c:r.Customer,s:0,a:0,u:0,d:0,t:0};
+    const x=bc[r.Customer];
+    x.s+=r.SIMs||0;x.a+=r['API Cost']||0;x.u+=r['Usage Cost']||0;x.d+=r['Data Forwarding']||0;x.t+=r['Billable Total']||0;
+  });
+  const rows=Object.values(bc).sort((a,b)=>b.t-a.t);
+  const top=sTopNv>=999?rows:rows.slice(0,sTopNv);
+  const gt=rows.reduce((s,r)=>s+r.t,0);
+  const gs=rows.reduce((s,r)=>s+r.s,0);
+  const aT=rows.reduce((s,r)=>s+r.a,0),uT=rows.reduce((s,r)=>s+r.u,0),dT=rows.reduce((s,r)=>s+r.d,0);
+  $('s-topn-lbl').textContent=sTopNv>=999?`All ${rows.length}`:`Top ${sTopNv} of ${rows.length}`;
+  $('s-tbl-note').textContent=globalThr>0?`Global threshold: >${globalThr} MB`:'';
+
+  $('s-kpis').innerHTML=`
+    <div class="kcard" style="--kc:var(--green)"><div class="kl">Billable Total</div><div class="kv">${f$(gt)}</div><div class="ks">${month==='all'?'Mar + Apr 2026':month}</div></div>
+    <div class="kcard" style="--kc:var(--blue)"><div class="kl">Total SIMs</div><div class="kv">${fN(gs)}</div><div class="ks">Active devices</div></div>
+    <div class="kcard" style="--kc:var(--purple)"><div class="kl">Customers</div><div class="kv">${rows.length}</div><div class="ks">Unique accounts</div></div>
+    <div class="kcard" style="--kc:var(--amber)"><div class="kl">Avg / Customer</div><div class="kv">${f$(rows.length?gt/rows.length:0)}</div><div class="ks">Billable average</div></div>
+    <div class="kcard" style="--kc:var(--red)"><div class="kl">Excluded Devices</div><div class="kv">${fN(exclDevs.length)}</div><div class="ks">≤ ${globalThr} MB threshold</div></div>`;
+
+  mkC('sBarC',{type:'bar',data:{
+    labels:top.map(r=>r.c.length>18?r.c.slice(0,16)+'…':r.c),
+    datasets:[{label:'Billable Total',data:top.map(r=>r.t),backgroundColor:top.map((_,i)=>COLS[i%COLS.length]+'bb'),borderColor:top.map((_,i)=>COLS[i%COLS.length]),borderWidth:1,borderRadius:3}]
+  },options:{...BASE,indexAxis:'y',scales:{x:{grid:{color:'rgba(33,38,45,.6)'},ticks:{color:'#8b949e',font:{family:'JetBrains Mono',size:10},callback:v=>'$'+v.toLocaleString()}},y:{grid:{display:false},ticks:{color:'#e6edf3',font:{size:11}}}},plugins:{...BASE.plugins,tooltip:{...BASE.plugins.tooltip,callbacks:{label:c=>f$(c.parsed.x)}}}}});
+
+  mkC('sPieC',{type:'doughnut',data:{
+    labels:['Billable API','Billable Usage','Billable Data Fwd'],
+    datasets:[{data:[aT,uT,dT],backgroundColor:['#388bfd','#3fb950','#e3b341'],borderColor:'#161b22',borderWidth:3,hoverOffset:5}]
+  },options:{...BASE,cutout:'60%',plugins:{...BASE.plugins,tooltip:{...BASE.plugins.tooltip,callbacks:{label:c=>c.label+': '+f$(c.parsed)}}}}});
+  $('sPieLeg').innerHTML=['Billable API','Billable Usage','Billable Data Fwd'].map((l,i)=>`<div class="legend-item"><div class="legend-dot" style="background:${['#388bfd','#3fb950','#e3b341'][i]}"></div>${l}: ${f$([aT,uT,dT][i])}</div>`).join('');
+
+  $('sTblB').innerHTML=top.map((r,i)=>{
+    const sh=gt?(r.t/gt*100).toFixed(1):'0.0';
+    const bw=top[0].t?(r.t/top[0].t*80).toFixed(0):0;
+    const flagged=exclCusts.has(r.c);
+    return`<tr style="${flagged&&globalThr>0?'opacity:.6':''}">
+      ${dc(i+1,i+1,'dim')}${dc(r.c+(flagged&&globalThr>0?' ⚠️':''),r.c)}
+      ${dc(fN(r.s),r.s)}${dc(f$(r.a),r.a)}${dc(f$(r.u),r.u)}${dc(f$(r.d),r.d)}
+      <td data-raw="${r.t}"><strong>${f$(r.t)}</strong></td>
+      <td><div style="display:flex;align-items:center;gap:5px"><div style="flex:1;height:4px;background:var(--bg3);border-radius:2px"><div style="width:${bw}%;height:100%;background:var(--blue3);border-radius:2px"></div></div><span style="font-size:10px;color:var(--text3)">${sh}%</span></div></td>
+    </tr>`;
+  }).join('')||`<tr><td colspan="8" class="tbl-empty">No data</td></tr>`;
+
+  // ── CUSTOMER AVG USAGE RANKING ──────────────────
+  // Build per-customer usage stats from CHARGES (threshold-aware)
+  const custUsage={};
+  CHARGES.filter(r=>(month==='all'||r.Month===month)&&inRange(r['Ship Date'],from,to)).forEach(r=>{
+    if(!custUsage[r.Customer])custUsage[r.Customer]={c:r.Customer,totalMB:0,devs:new Set(),bill:0};
+    custUsage[r.Customer].totalMB+=r['Usage (MB)']||0;
+    custUsage[r.Customer].devs.add(r.Device);
+    custUsage[r.Customer].bill+=r['Total']||0;
+  });
+  // Convert devs set to count, calc avg, apply global threshold
+  const custUsageRows=Object.values(custUsage).map(c=>({
+    ...c,
+    devCnt:c.devs.size,
+    avgMB:c.devs.size?c.totalMB/c.devs.size:0
+  })).filter(c=>c.avgMB>globalThr).sort((a,b)=>b.avgMB-a.avgMB);
+
+  // Avg usage bar chart (horizontal, sorted by avg)
+  const top20avg=custUsageRows.slice(0,20);
+  const avgBarColors=top20avg.map(c=>c.avgMB>globalThr&&globalThr>0?'#f4706799':'#388bfdbb');
+  const avgBorderColors=top20avg.map(c=>c.avgMB>globalThr&&globalThr>0?'#f47067':'#388bfd');
+  mkC('sAvgBarC',{type:'bar',data:{
+    labels:top20avg.map(c=>c.c.length>18?c.c.slice(0,16)+'…':c.c),
+    datasets:[{label:'Avg MB/Device',data:top20avg.map(c=>+c.avgMB.toFixed(2)),backgroundColor:avgBarColors,borderColor:avgBorderColors,borderWidth:1,borderRadius:3}]
+  },options:{...BASE,indexAxis:'y',
+    scales:{
+      x:{grid:{color:'rgba(33,38,45,.6)'},ticks:{color:'#8b949e',font:{family:'JetBrains Mono',size:10},callback:v=>v.toLocaleString()+' MB'}},
+      y:{grid:{display:false},ticks:{color:'#e6edf3',font:{size:10}}}
+    },
+    plugins:{...BASE.plugins,tooltip:{...BASE.plugins.tooltip,callbacks:{label:c=>fMB(c.parsed.x)}}}
+  }});
+
+  // ── THRESHOLD ANALYSIS TABLE ──────────────────
+  // Flag: small customers (below median SIM count) with high avg usage
+  const simCounts=custUsageRows.map(c=>c.devCnt).sort((a,b)=>a-b);
+  const medianSims=simCounts.length?simCounts[Math.floor(simCounts.length/2)]:0;
+  const overallAvgMB=custUsageRows.length?custUsageRows.reduce((s,c)=>s+c.avgMB,0)/custUsageRows.length:0;
+  const alertRows=custUsageRows.filter(c=>c.avgMB>overallAvgMB);
+  $('s-alert-badge').textContent=alertRows.length+' alerts';
+  $('sThrTblB').innerHTML=custUsageRows.map((c,i)=>{
+    const isSmall=c.devCnt<=medianSims;
+    const isHighUsage=c.avgMB>overallAvgMB;
+    const isCritical=isSmall&&isHighUsage&&globalThr>0?c.avgMB>globalThr:isHighUsage;
+    const alertBadge=isCritical&&isSmall?`<span class="badge br">🔴 High+Small</span>`:isHighUsage?`<span class="badge ba">⚠️ High Usage</span>`:`<span class="badge bg">✓ Normal</span>`;
+    return`<tr>
+      ${dc(i+1,i+1,'dim')}${dc(c.c,c.c)}
+      ${dc(fN(c.devCnt),c.devCnt)}
+      <td data-raw="${c.avgMB}" style="font-family:var(--mono);font-size:11px;color:${isCritical?'var(--red)':isHighUsage?'var(--amber)':'var(--green)'}">${fMB(c.avgMB)}</td>
+      ${dc(fMB(c.totalMB),c.totalMB)}
+      ${dc(f$(c.bill),c.bill)}
+      <td>${alertBadge}</td>
+    </tr>`;
+  }).join('')||`<tr><td colspan="7" class="tbl-empty">No data above threshold</td></tr>`;
+
+  // ── THRESHOLD LINE CHART ──────────────────────
+  // All customers avg MB + threshold line
+  const thrChartRows=[...custUsageRows].sort((a,b)=>b.avgMB-a.avgMB);
+  mkC('sThrLineC',{type:'bar',data:{
+    labels:thrChartRows.map(c=>c.c.length>14?c.c.slice(0,12)+'…':c.c),
+    datasets:[
+      {
+        label:'Avg MB / Device',
+        data:thrChartRows.map(c=>+c.avgMB.toFixed(2)),
+        backgroundColor:thrChartRows.map(c=>c.avgMB>overallAvgMB?'#f4706766':'#388bfd66'),
+        borderColor:thrChartRows.map(c=>c.avgMB>overallAvgMB?'#f47067':'#388bfd'),
+        borderWidth:1,borderRadius:3,order:2
+      },
+      {
+        label:globalThr>0?`Global Threshold (${globalThr} MB)`:`Avg Baseline (${overallAvgMB.toFixed(0)} MB)`,
+        data:thrChartRows.map(()=>globalThr>0?globalThr:+overallAvgMB.toFixed(2)),
+        type:'line',borderColor:'#f47067',borderWidth:2,borderDash:[6,3],
+        pointRadius:0,fill:false,order:1,
+        backgroundColor:'transparent'
+      }
+    ]
+  },options:{...BASE,
+    scales:{
+      x:{grid:{display:false},ticks:{color:'#8b949e',font:{size:9},maxRotation:45}},
+      y:{grid:{color:'rgba(33,38,45,.5)'},ticks:{color:'#8b949e',font:{size:10},callback:v=>v+' MB'}}
+    },
+    plugins:{...BASE.plugins,
+      legend:{display:true,labels:{color:'#8b949e',font:{size:11},boxWidth:12}},
+      tooltip:{...BASE.plugins.tooltip,callbacks:{label:c=>c.dataset.type==='line'?c.dataset.label:fMB(c.parsed.y)}}
+    }
+  }});
+}
+
+// ── PAGE 2: THRESHOLD ─────────────────────────────
+let thrV=0;
+function onTS(v){thrV=+v;$('t-val').textContent=v+' MB';rThr();}
+function rThr(){
+  const month=$('t-month').value,cust=$('t-cust').value,thr=thrV;
+  const from=$('t-from').value,to=$('t-to').value;
+  let data=CHARGES.filter(r=>(month==='all'||r.Month===month)&&(cust==='all'||r.Customer===cust)&&inRange(r['Ship Date'],from,to));
+  const devMap={};
+  data.forEach(r=>{const k=r.Device+'|'+r.Month;if(!devMap[k])devMap[k]={c:r.Customer,dev:r.Device,iccid:r.ICCID,ship:r['Ship Date'],month:r.Month,mb:0,tot:0};devMap[k].mb+=r['Usage (MB)']||0;devMap[k].tot+=r['Total']||0;});
+  const all=Object.values(devMap),total=all.length;
+  const inc=all.filter(d=>d.mb>thr),excl=total-inc.length;
+  const pct=total?Math.round(inc.length/total*100):100;
+  $('t-gauge').style.width=pct+'%';$('t-pct').textContent=pct+'%';
+  $('t-excl-n').textContent=excl;$('t-total-lbl').textContent='of '+total+' records';
+  $('t-excl-lbl').textContent=excl+' excluded';
+  const totMB=inc.reduce((s,d)=>s+d.mb,0),avgMB=inc.length?totMB/inc.length:0,totBill=inc.reduce((s,d)=>s+d.tot,0);
+  $('t-kpis').innerHTML=`
+    <div class="kcard" style="--kc:var(--blue)"><div class="kl">Devices Included</div><div class="kv">${fN(inc.length)}</div><div class="ks">Above ${thr} MB</div></div>
+    <div class="kcard" style="--kc:var(--teal)"><div class="kl">Total Usage</div><div class="kv">${fMB(totMB)}</div><div class="ks">Threshold-filtered</div></div>
+    <div class="kcard" style="--kc:var(--amber)"><div class="kl">Avg Usage / Device</div><div class="kv">${fMB(avgMB)}</div><div class="ks">Excl. ≤ ${thr} MB</div></div>
+    <div class="kcard" style="--kc:var(--green)"><div class="kl">Billable Total</div><div class="kv">${f$(totBill)}</div><div class="ks">Included only</div></div>`;
+  const byCust={};
+  inc.forEach(d=>{if(!byCust[d.c])byCust[d.c]={c:d.c,mb:0,cnt:0,bill:0};byCust[d.c].mb+=d.mb;byCust[d.c].cnt++;byCust[d.c].bill+=d.tot;});
+  const cRows=Object.values(byCust).sort((a,b)=>b.mb-a.mb);
+  cRows.forEach(c=>c.avg=c.cnt?c.mb/c.cnt:0);
+  const top15=cRows.slice(0,15);
+  mkC('tBarC',{type:'bar',data:{labels:top15.map(c=>c.c.length>16?c.c.slice(0,14)+'…':c.c),datasets:[{label:'Avg MB',data:top15.map(c=>+c.avg.toFixed(2)),backgroundColor:'#388bfdbb',borderColor:'#388bfd',borderWidth:1,borderRadius:3,order:1},{label:'Total MB',data:top15.map(c=>+c.mb.toFixed(2)),backgroundColor:'#3fb95033',borderColor:'#3fb950',borderWidth:1,borderRadius:3,order:2}]},options:{...BASE,scales:{x:{grid:{display:false},ticks:{color:'#e6edf3',font:{size:11}}},y:{grid:{color:'rgba(33,38,45,.6)'},ticks:{color:'#8b949e',font:{family:'JetBrains Mono',size:10},callback:v=>v.toLocaleString()+' MB'}}},plugins:{...BASE.plugins,legend:{display:true,labels:{color:'#8b949e',font:{size:11},boxWidth:10}}}}});
+  const top8=cRows.slice(0,8);
+  mkC('tPieC',{type:'doughnut',data:{labels:top8.map(c=>c.c),datasets:[{data:top8.map(c=>+c.bill.toFixed(2)),backgroundColor:COLS.slice(0,8).map(c=>c+'cc'),borderColor:'#161b22',borderWidth:3,hoverOffset:5}]},options:{...BASE,cutout:'58%',plugins:{...BASE.plugins,tooltip:{...BASE.plugins.tooltip,callbacks:{label:c=>c.label+': '+f$(c.parsed)}}}}});
+  $('tPieLeg').innerHTML=top8.map((c,i)=>`<div class="legend-item"><div class="legend-dot" style="background:${COLS[i]}"></div>${c.c.length>20?c.c.slice(0,18)+'…':c.c}: ${f$(c.bill)}</div>`).join('');
+  $('t-dev-ct').textContent=inc.length+' records';
+  $('tTblB').innerHTML=inc.sort((a,b)=>b.mb-a.mb).map((d,i)=>{const st=d.mb>200?'High':d.mb>50?'Normal':'Low';const bc=st==='High'?'br':st==='Normal'?'bg':'ba';return`<tr>${dc(i+1,i+1,'dim')}${dc(d.c,d.c)}<td class="mono">${d.dev}</td><td class="mono" style="font-size:10px">${d.iccid}</td>${dc(fMB(d.mb),d.mb)}${dc(f$(d.tot),d.tot)}<td><span class="badge ${bc}">${st}</span></td></tr>`;}).join('')||`<tr><td colspan="7" class="tbl-empty">No devices above threshold</td></tr>`;
+}
+
+// ── PAGE 3: COST ─────────────────────────────────
+let cMonth='all',cTopNv=10;
+function setCM(m,btn){cMonth=m;document.querySelectorAll('#c-month-pills .pill').forEach(p=>p.classList.remove('on'));btn.classList.add('on');rCost();}
+function setCTopN(n,btn){cTopNv=n;document.querySelectorAll('#c-topn-pills .pill').forEach(p=>p.classList.remove('on'));btn.classList.add('on');rCost();}
+function rCost(){
+  const cust=$('c-cust').value;
+  const from=$('c-from').value,to=$('c-to').value;
+  const qualCusts=(from||to)?new Set(CHARGES.filter(r=>inRange(r['Ship Date'],from,to)).map(r=>r.Customer)):null;
+  const inv=INVOICE.filter(r=>(cMonth==='all'||r.Month===cMonth)&&(cust==='all'||r.Customer===cust)&&(!qualCusts||qualCusts.has(r.Customer)));
+  const bc={};
+  inv.forEach(r=>{if(!bc[r.Customer])bc[r.Customer]={c:r.Customer,s:0,a:0,u:0,d:0,t:0};const x=bc[r.Customer];x.s+=r.SIMs||0;x.a+=r['API Cost']||0;x.u+=r['Usage Cost']||0;x.d+=r['Data Forwarding']||0;x.t+=r['Billable Total']||0;});
+  const rows=Object.values(bc).sort((a,b)=>b.t-a.t);
+  const top=cTopNv>=999?rows:rows.slice(0,cTopNv);
+  const gt=rows.reduce((s,r)=>s+r.t,0);
+  const aT=rows.reduce((s,r)=>s+r.a,0),uT=rows.reduce((s,r)=>s+r.u,0),dT=rows.reduce((s,r)=>s+r.d,0);
+  $('c-topn-lbl').textContent=cTopNv>=999?`All ${rows.length}`:`Top ${cTopNv} of ${rows.length}`;
+  $('c-kpis').innerHTML=`
+    <div class="kcard" style="--kc:var(--green)"><div class="kl">Billable Total</div><div class="kv">${f$(gt)}</div><div class="ks">${cMonth==='all'?'All periods':cMonth}</div></div>
+    <div class="kcard" style="--kc:var(--blue)"><div class="kl">Billable API Revenue</div><div class="kv">${f$(aT)}</div><div class="ks">${gt?Math.round(aT/gt*100):0}% of total</div></div>
+    <div class="kcard" style="--kc:var(--amber)"><div class="kl">Billable Usage Revenue</div><div class="kv">${f$(uT)}</div><div class="ks">${gt?Math.round(uT/gt*100):0}% of total</div></div>
+    <div class="kcard" style="--kc:var(--purple)"><div class="kl">Billable Data Fwd</div><div class="kv">${f$(dT)}</div><div class="ks">${gt?Math.round(dT/gt*100):0}% of total</div></div>`;
+  mkC('cPieC',{type:'doughnut',data:{labels:['Billable API Revenue','Billable Usage Revenue','Billable Data Forwarding'],datasets:[{data:[aT,uT,dT],backgroundColor:['#388bfd','#3fb950','#e3b341'],borderColor:'#161b22',borderWidth:3,hoverOffset:6}]},options:{...BASE,cutout:'62%',plugins:{...BASE.plugins,tooltip:{...BASE.plugins.tooltip,callbacks:{label:c=>c.label+': '+f$(c.parsed)}}}}});
+  $('cPieLeg').innerHTML=['Billable API Revenue','Billable Usage Revenue','Billable Data Forwarding'].map((l,i)=>`<div class="legend-item"><div class="legend-dot" style="background:${['#388bfd','#3fb950','#e3b341'][i]}"></div>${l}: ${f$([aT,uT,dT][i])}</div>`).join('');
+  const mI=INVOICE.filter(r=>r.Month==='March 2026'),aI=INVOICE.filter(r=>r.Month==='April 2026');
+  mkC('cMomC',{type:'bar',data:{labels:['March 2026','April 2026'],datasets:[{label:'Billable API',data:[mI.reduce((s,r)=>s+r['API Cost'],0),aI.reduce((s,r)=>s+r['API Cost'],0)],backgroundColor:'#388bfdbb',borderColor:'#388bfd',borderWidth:1,borderRadius:3},{label:'Billable Usage',data:[mI.reduce((s,r)=>s+r['Usage Cost'],0),aI.reduce((s,r)=>s+r['Usage Cost'],0)],backgroundColor:'#3fb950bb',borderColor:'#3fb950',borderWidth:1,borderRadius:3},{label:'Billable Data Fwd',data:[mI.reduce((s,r)=>s+r['Data Forwarding'],0),aI.reduce((s,r)=>s+r['Data Forwarding'],0)],backgroundColor:'#e3b341bb',borderColor:'#e3b341',borderWidth:1,borderRadius:3}]},options:{...BASE,scales:{x:{stacked:true,grid:{display:false},ticks:{color:'#e6edf3'}},y:{stacked:true,grid:{color:'rgba(33,38,45,.6)'},ticks:{color:'#8b949e',callback:v=>'$'+v.toLocaleString()}}},plugins:{...BASE.plugins,legend:{display:true,labels:{color:'#8b949e',font:{size:11},boxWidth:10}}}}});
+  $('cTblB').innerHTML=top.map((r,i)=>{const sh=gt?(r.t/gt*100).toFixed(1):'0.0';const bw=top[0].t?(r.t/top[0].t*80).toFixed(0):0;return`<tr>${dc(i+1,i+1,'dim')}${dc(r.c,r.c)}${dc(fN(r.s),r.s)}${dc(f$(r.a),r.a)}${dc(f$(r.u),r.u)}${dc(f$(r.d),r.d)}<td data-raw="${r.t}"><strong>${f$(r.t)}</strong></td><td><div style="display:flex;align-items:center;gap:5px"><div style="flex:1;height:4px;background:var(--bg3);border-radius:2px"><div style="width:${bw}%;height:100%;background:var(--blue3);border-radius:2px"></div></div><span style="font-size:10px;color:var(--text3)">${sh}%</span></div></td></tr>`;}).join('')||`<tr><td colspan="8" class="tbl-empty">No data</td></tr>`;
+}
+
+// ── PAGE 4: SHIP ─────────────────────────────────
+function clrShip(){$('sh-cust').value='all';$('sh-from').value='';$('sh-to').value='';rShip();toast('Filters cleared');}
+function rShip(){
+  const cust=$('sh-cust').value,from=$('sh-from').value,to=$('sh-to').value;
+  // Deduplicate: one record per device (pick the row with ship date data preferring unique)
+  const seen={};
+  CHARGES.forEach(r=>{
+    const k=r.Device;
+    if(!seen[k]||(r['Ship Date']&&r['Ship Date']!='nan'&&(!seen[k]['Ship Date']||seen[k]['Ship Date']==='nan')))seen[k]=r;
+  });
+  let devs=Object.values(seen);
+  if(cust!=='all')devs=devs.filter(r=>r.Customer===cust);
+  if(from){const fd=pd(from);devs=devs.filter(r=>{const d=pd(r['Ship Date']);return d&&d>=fd;});}
+  if(to){const td2=pd(to);devs=devs.filter(r=>{const d=pd(r['Ship Date']);return d&&d<=td2;});}
+  $('sh-kpis').innerHTML=`
+    <div class="kcard" style="--kc:var(--blue)"><div class="kl">Devices</div><div class="kv">${fN(devs.length)}</div><div class="ks">Matching filters</div></div>
+    <div class="kcard" style="--kc:var(--green)"><div class="kl">Customers</div><div class="kv">${new Set(devs.map(r=>r.Customer)).size}</div><div class="ks">Unique accounts</div></div>
+    <div class="kcard" style="--kc:var(--amber)"><div class="kl">Ship Dates</div><div class="kv">${new Set(devs.map(r=>r['Ship Date']).filter(d=>d&&d!='nan')).size}</div><div class="ks">Unique dates</div></div>
+    <div class="kcard" style="--kc:var(--purple)"><div class="kl">Avg Usage</div><div class="kv">${fMB(devs.length?devs.reduce((s,r)=>s+(r['Usage (MB)']||0),0)/devs.length:0)}</div><div class="ks">Per device</div></div>`;
+  $('sh-ct').textContent=devs.length+' devices';
+  const byDate={};devs.forEach(r=>{const d=r['Ship Date']||'Unknown';byDate[d]=(byDate[d]||0)+1;});
+  const sDates=Object.keys(byDate).filter(d=>d&&d!='nan').sort((a,b)=>pd(a)-pd(b));
+  mkC('shTimeC',{type:'bar',data:{labels:sDates,datasets:[{label:'Devices',data:sDates.map(d=>byDate[d]),backgroundColor:'#388bfd99',borderColor:'#388bfd',borderWidth:1,borderRadius:3}]},options:{...BASE,scales:{x:{grid:{display:false},ticks:{color:'#8b949e',font:{size:10},maxRotation:45}},y:{grid:{color:'rgba(33,38,45,.6)'},ticks:{color:'#8b949e'}}}}});
+  const byCust={};devs.forEach(r=>{byCust[r.Customer]=(byCust[r.Customer]||0)+1;});
+  const cE=Object.entries(byCust).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  mkC('shCustC',{type:'bar',data:{labels:cE.map(([c])=>c.length>14?c.slice(0,12)+'…':c),datasets:[{label:'Devices',data:cE.map(([,v])=>v),backgroundColor:cE.map((_,i)=>COLS[i%COLS.length]+'bb'),borderColor:cE.map((_,i)=>COLS[i%COLS.length]),borderWidth:1,borderRadius:3}]},options:{...BASE,indexAxis:'y',scales:{x:{grid:{color:'rgba(33,38,45,.6)'},ticks:{color:'#8b949e'}},y:{grid:{display:false},ticks:{color:'#e6edf3',font:{size:11}}}}}});
+  // Ship table — per device, usage from that device's own row only
+  $('shTblB').innerHTML=devs.sort((a,b)=>pd(b['Ship Date'])-pd(a['Ship Date'])).map(r=>`<tr>
+    ${dc(r.Customer,r.Customer)}<td class="mono">${r.Device}</td><td class="mono" style="font-size:10px">${r.ICCID}</td>
+    ${dc(r['Ship Date']||'—',r['Ship Date']||'')}
+    ${dc(fMB(r['Usage (MB)']||0),r['Usage (MB)']||0)}
+  </tr>`).join('')||`<tr><td colspan="5" class="tbl-empty">No devices found</td></tr>`;
+}
+
+// ── PAGE 5: DEVICE ────────────────────────────────
+let dThrV=0;
+function onDS(v){dThrV=+v;$('d-thr').textContent=v+' MB';rDev();}
+function clrF(id){$(id).value='';rDev();}
+function clrAllDev(){$('d-month').value='all';$('d-cust').value='all';$('d-serial').value='';$('d-iccid').value='';$('d-from').value='';$('d-to').value='';$('d-slider').value=0;dThrV=0;$('d-thr').textContent='0 MB';rDev();toast('All filters reset');}
+function rDev(){
+  const month=$('d-month').value,cust=$('d-cust').value;
+  const sQ=($('d-serial').value||'').trim().toLowerCase();
+  const iQ=($('d-iccid').value||'').trim().toLowerCase();
+  const thr=dThrV;
+  const from=$('d-from').value,to=$('d-to').value;
+  let data=CHARGES.filter(r=>{
+    if(month!=='all'&&r.Month!==month)return false;
+    if(cust!=='all'&&r.Customer!==cust)return false;
+    if(!inRange(r['Ship Date'],from,to))return false;
+    if(sQ&&!r.Device.toLowerCase().includes(sQ))return false;
+    if(iQ&&!r.ICCID.toLowerCase().includes(iQ))return false;
+    return true;
+  });
+  const inc=data.filter(r=>(r['Usage (MB)']||0)>thr);
+  const excl=data.length-inc.length;
+  const totMB=inc.reduce((s,r)=>s+(r['Usage (MB)']||0),0);
+  const avgMB=inc.length?totMB/inc.length:0;
+  const totBill=inc.reduce((s,r)=>s+(r['Total']||0),0);
+  const uDevs=new Set(inc.map(r=>r.Device)).size;
+  $('d-kpis').innerHTML=`
+    <div class="kcard" style="--kc:var(--blue)"><div class="kl">Devices</div><div class="kv">${fN(uDevs)}</div><div class="ks">${excl} excluded by threshold</div></div>
+    <div class="kcard" style="--kc:var(--teal)"><div class="kl">Total Usage</div><div class="kv">${fMB(totMB)}</div><div class="ks">Threshold-aware</div></div>
+    <div class="kcard" style="--kc:var(--amber)"><div class="kl">Avg / Device</div><div class="kv">${fMB(avgMB)}</div><div class="ks">Excl. ≤ ${thr} MB</div></div>
+    <div class="kcard" style="--kc:var(--green)"><div class="kl">Billable Total</div><div class="kv">${f$(totBill)}</div><div class="ks">Included only</div></div>`;
+  $('d-ct').textContent=`${inc.length} records · ${uDevs} unique devices`;
+  const bkts=[0,5,25,50,100,250,500,1000,2000,4096];
+  const lbls=['0–5','5–25','25–50','50–100','100–250','250–500','500–1K','1K–2K','2K+'];
+  const cnts=new Array(9).fill(0);
+  data.forEach(r=>{const u=r['Usage (MB)']||0;for(let i=bkts.length-2;i>=0;i--){if(u>=bkts[i]){cnts[i]++;break;}}});
+  mkC('dHistC',{type:'bar',data:{labels:lbls,datasets:[{label:'Devices',data:cnts,backgroundColor:cnts.map((_,i)=>bkts[i]>=thr?'#388bfdbb':'#484f5899'),borderColor:cnts.map((_,i)=>bkts[i]>=thr?'#388bfd':'#484f58'),borderWidth:1,borderRadius:3}]},options:{...BASE,scales:{x:{grid:{display:false},ticks:{color:'#8b949e',font:{size:10}}},y:{grid:{color:'rgba(33,38,45,.6)'},ticks:{color:'#8b949e'}}},plugins:{...BASE.plugins,tooltip:{...BASE.plugins.tooltip,callbacks:{label:c=>`${c.parsed.y} devices`}}}}});
+  const byCust2={};
+  inc.forEach(r=>{if(!byCust2[r.Customer])byCust2[r.Customer]={tot:0,cnt:0};byCust2[r.Customer].tot+=r['Usage (MB)']||0;byCust2[r.Customer].cnt++;});
+  const cA=Object.entries(byCust2).sort((a,b)=>b[1].tot-a[1].tot).slice(0,12);
+  mkC('dCustC',{type:'bar',data:{labels:cA.map(([c])=>c.length>12?c.slice(0,10)+'…':c),datasets:[{label:'Total MB',data:cA.map(([,v])=>+v.tot.toFixed(1)),backgroundColor:'#3fb95033',borderColor:'#3fb950',borderWidth:1,borderRadius:3,yAxisID:'y'},{label:'Avg MB',data:cA.map(([,v])=>+(v.tot/v.cnt).toFixed(1)),backgroundColor:'#388bfdbb',borderColor:'#388bfd',borderWidth:1,borderRadius:3,yAxisID:'y1'}]},options:{...BASE,scales:{x:{grid:{display:false},ticks:{color:'#e6edf3',font:{size:10}}},y:{grid:{color:'rgba(33,38,45,.6)'},ticks:{color:'#3fb950',font:{size:10}},title:{display:true,text:'Total MB',color:'#3fb950',font:{size:10}}},y1:{position:'right',grid:{display:false},ticks:{color:'#388bfd',font:{size:10}},title:{display:true,text:'Avg MB',color:'#388bfd',font:{size:10}}}},plugins:{...BASE.plugins,legend:{display:true,labels:{color:'#8b949e',font:{size:11},boxWidth:10}}}}});
+  $('dTblB').innerHTML=inc.sort((a,b)=>(b['Usage (MB)']||0)-(a['Usage (MB)']||0)).map(r=>{const u=r['Usage (MB)']||0;const st=u>200?'High':u>50?'Normal':u>0?'Low':'Zero';const bc=st==='High'?'br':st==='Normal'?'bg':st==='Low'?'ba':'bb';return`<tr>${dc(r.Customer,r.Customer)}<td class="mono">${r.Device}</td><td class="mono" style="font-size:10px">${r.ICCID}</td>${dc(r.Month,r.Month,'dim')}${dc(fMB(u),u)}${dc(f$(r['Total']||0),r['Total']||0)}${dc(r['Ship Date']||'—',r['Ship Date']||'')}<td><span class="badge ${bc}">${st}</span></td></tr>`;}).join('')||`<tr><td colspan="8" class="tbl-empty">No devices match current filters</td></tr>`;
+}
+
+// ── PAGE 6: OUTLIER DETECTION ────────────────────
+let oShow='all', oThrV=0;
+function onOT(v){oThrV=+v;$('o-thr-val').textContent=v+' MB';rOut();}
+function setOShow(v,btn){oShow=v;document.querySelectorAll('#o-show-pills .pill').forEach(p=>p.classList.remove('on'));btn.classList.add('on');rOut();}
+function clrOutFilters(){$('o-from').value='';$('o-to').value='';$('o-slider').value=0;oThrV=0;$('o-thr-val').textContent='0 MB';rOut();toast('Outlier filters cleared');}
+function popOutDates(){
+  const dates=[...new Set(CHARGES.map(r=>r['Ship Date']).filter(d=>d&&d!='nan'&&d!=''))].sort((a,b)=>pd(a)-pd(b));
+  ['o-from','o-to'].forEach(id=>{
+    const el=$(id);if(!el)return;
+    while(el.options.length>1)el.remove(1);
+    dates.forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d;el.appendChild(o);});
+  });
+}
+function rOut(){
+  const month=$('o-month').value,cust=$('o-cust').value;
+  const from=$('o-from').value,to=$('o-to').value;
+  const thr=oThrV;
+
+  // Filter charges by month, customer, date range
+  const filtered=CHARGES.filter(r=>{
+    if(month!=='all'&&r.Month!==month)return false;
+    if(cust!=='all'&&r.Customer!==cust)return false;
+    if(from){const fd=pd(from);const rd=pd(r['Ship Date']);if(rd&&rd<fd)return false;}
+    if(to){const td2=pd(to);const rd=pd(r['Ship Date']);if(rd&&rd>td2)return false;}
+    return true;
+  });
+
+  // Aggregate per device per month
+  const devMap={};
+  filtered.forEach(r=>{
+    const k=r.Device+'|'+r.Month;
+    if(!devMap[k])devMap[k]={cust:r.Customer,dev:r.Device,iccid:r.ICCID,month:r.Month,ship:r['Ship Date'],mb:0,bill:0};
+    devMap[k].mb+=r['Usage (MB)']||0;devMap[k].bill+=r['Total']||0;
+  });
+  const allDevs=Object.values(devMap);
+
+  // Apply exclusion threshold BEFORE computing IQR
+  const exclCount=allDevs.filter(d=>d.mb<=thr).length;
+  $('o-excl-badge').textContent=exclCount+' excluded';
+  const devs=allDevs.filter(d=>d.mb>thr);
+
+  const iqr=computeIQR(devs.map(d=>d.mb));
+
+  // Update fence bar
+  $('o-q1').textContent=fMB(iqr.q1);
+  $('o-med').textContent=fMB(iqr.med);
+  $('o-q3').textContent=fMB(iqr.q3);
+  $('o-iqr').textContent=fMB(iqr.iqr);
+  $('o-low-f').textContent=fMB(Math.max(0,iqr.low));
+  $('o-high-f').textContent=fMB(iqr.high);
+
+  // Classify
+  devs.forEach(d=>{
+    if(d.mb>iqr.high)d.cls='High Outlier';
+    else if(d.mb<iqr.low&&d.mb>0)d.cls='Low Outlier';
+    else d.cls='Normal';
+    d.vsMedian=iqr.med?((d.mb-iqr.med)/iqr.med*100):0;
+  });
+  const highOut=devs.filter(d=>d.cls==='High Outlier');
+  const lowOut=devs.filter(d=>d.cls==='Low Outlier');
+  const normal=devs.filter(d=>d.cls==='Normal');
+  $('o-n-high').textContent=highOut.length;
+  $('o-n-low').textContent=lowOut.length;
+
+  // KPIs
+  $('o-kpis').innerHTML=`
+    <div class="kcard" style="--kc:var(--red)"><div class="kl">High Outliers</div><div class="kv">${highOut.length}</div><div class="ks">&gt; ${fMB(iqr.high)}</div></div>
+    <div class="kcard" style="--kc:var(--orange)"><div class="kl">Low Outliers</div><div class="kv">${lowOut.length}</div><div class="ks">&lt; ${fMB(Math.max(0,iqr.low))}</div></div>
+    <div class="kcard" style="--kc:var(--green)"><div class="kl">Normal Devices</div><div class="kv">${normal.length}</div><div class="ks">Within IQR fences</div></div>
+    <div class="kcard" style="--kc:var(--amber)"><div class="kl">Outlier Rate</div><div class="kv">${devs.length?((highOut.length+lowOut.length)/devs.length*100).toFixed(1)+'%':'—'}</div><div class="ks">of ${devs.length} device records</div></div>`;
+
+  // Scatter-style: sorted usage with fence lines
+  const sortedDevs=[...devs].sort((a,b)=>a.mb-b.mb);
+  mkC('oScatC',{type:'scatter',data:{datasets:[
+    {label:'Normal',data:normal.map((d,i)=>({x:devs.indexOf(d),y:d.mb})),backgroundColor:'#3fb95066',borderColor:'#3fb950',pointRadius:3,pointHoverRadius:5},
+    {label:'High Outlier',data:highOut.map(d=>({x:devs.indexOf(d),y:d.mb})),backgroundColor:'#f4706799',borderColor:'#f47067',pointRadius:5,pointHoverRadius:7},
+    {label:'Low Outlier',data:lowOut.map(d=>({x:devs.indexOf(d),y:d.mb})),backgroundColor:'#fb923c99',borderColor:'#fb923c',pointRadius:5,pointHoverRadius:7}
+  ]},options:{...BASE,scales:{
+    x:{grid:{color:'rgba(33,38,45,.4)'},ticks:{color:'#8b949e',font:{size:10}},title:{display:true,text:'Device Index',color:'#6e7681',font:{size:10}}},
+    y:{grid:{color:'rgba(33,38,45,.4)'},ticks:{color:'#8b949e',font:{size:10},callback:v=>v.toLocaleString()+' MB'},title:{display:true,text:'Usage (MB)',color:'#6e7681',font:{size:10}}}
+  },plugins:{...BASE.plugins,
+    legend:{display:true,labels:{color:'#8b949e',font:{size:11},boxWidth:10}},
+    annotation:{annotations:{
+      high:{type:'line',yMin:iqr.high,yMax:iqr.high,borderColor:'#f47067',borderWidth:1.5,borderDash:[4,4],label:{content:'Upper Fence',enabled:true,color:'#f47067',font:{size:9}}},
+      low:{type:'line',yMin:Math.max(0,iqr.low),yMax:Math.max(0,iqr.low),borderColor:'#fb923c',borderWidth:1.5,borderDash:[4,4]}
+    }}
+  }}});
+
+  // Outliers by customer bar
+  const byCustOut={};
+  [...highOut,...lowOut].forEach(d=>{if(!byCustOut[d.cust])byCustOut[d.cust]={h:0,l:0};d.cls==='High Outlier'?byCustOut[d.cust].h++:byCustOut[d.cust].l++;});
+  const cOutArr=Object.entries(byCustOut).sort((a,b)=>(b[1].h+b[1].l)-(a[1].h+a[1].l)).slice(0,12);
+  mkC('oCustC',cOutArr.length?{type:'bar',data:{labels:cOutArr.map(([c])=>c.length>14?c.slice(0,12)+'…':c),datasets:[{label:'High Outliers',data:cOutArr.map(([,v])=>v.h),backgroundColor:'#f4706799',borderColor:'#f47067',borderWidth:1,borderRadius:3},{label:'Low Outliers',data:cOutArr.map(([,v])=>v.l),backgroundColor:'#fb923c99',borderColor:'#fb923c',borderWidth:1,borderRadius:3}]},options:{...BASE,scales:{x:{grid:{display:false},ticks:{color:'#e6edf3',font:{size:10}}},y:{grid:{color:'rgba(33,38,45,.6)'},ticks:{color:'#8b949e',font:{size:10}}}},plugins:{...BASE.plugins,legend:{display:true,labels:{color:'#8b949e',font:{size:11},boxWidth:10}}}}}:{type:'bar',data:{labels:['No outliers found'],datasets:[{data:[0],backgroundColor:'#3fb950'}]},options:{...BASE}});
+
+  // Filter for display
+  let shown=oShow==='all'?devs:oShow==='high'?highOut:oShow==='low'?lowOut:[...highOut,...lowOut];
+  const outlierCount=highOut.length+lowOut.length;
+  $('o-count-badge').textContent=outlierCount+' outlier'+(outlierCount!==1?'s':'');
+  $('o-ct').textContent=shown.length+' records shown';
+  $('oTblB').innerHTML=shown.sort((a,b)=>b.mb-a.mb).map(d=>{
+    const cls=d.cls;const bc=cls==='High Outlier'?'br':cls==='Low Outlier'?'bo':'bg';
+    const vsSign=d.vsMedian>=0?'+':'';
+    return`<tr>
+      ${dc(d.cust,d.cust)}<td class="mono">${d.dev}</td><td class="mono" style="font-size:10px">${d.iccid}</td>
+      ${dc(d.month,d.month,'dim')}${dc(d.ship||'—',d.ship||'')}${dc(fMB(d.mb),d.mb)}
+      <td data-raw="${d.vsMedian}" style="color:${d.vsMedian>0?'var(--red)':'var(--orange)'};font-family:var(--mono);font-size:11px">${vsSign}${d.vsMedian.toFixed(1)}%</td>
+      <td><span class="badge ${bc}">${cls}</span></td>
+      <td style="font-size:11px;color:var(--text3);font-family:var(--mono)">${cls==='High Outlier'?'> '+fMB(iqr.high):cls==='Low Outlier'?'< '+fMB(Math.max(0,iqr.low)):'within fences'}</td>
+    </tr>`;
+  }).join('')||`<tr><td colspan="9" class="tbl-empty">No ${oShow==='outlier'?'outliers':oShow+' outliers'} found in current selection</td></tr>`;
+}
+
+// ── INIT ─────────────────────────────────────────
+async function init() {
+  showSpinner(true);
+  try {
+    await loadAllData();
+    if (CHARGES.length === 0) {
+      showLoadError('No data loaded. Check that your Google Sheets are public and have Charges/Invoice tabs.');
+      showSpinner(false);
+      return;
+    }
+    // Update month selects dynamically
+    const MONTHS = [...new Set(CHARGES.map(r => r.Month))].sort();
+    ['s-month','t-month','d-month','o-month'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      while (el.options.length > 1) el.remove(1);
+      MONTHS.forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = m; el.appendChild(o); });
+    });
+    // Update cost month pills
+    const pills = document.getElementById('c-month-pills');
+    if (pills) {
+      pills.innerHTML = `<button class="pill on" onclick="setCM('all',this)">All</button>` +
+        MONTHS.map(m => `<button class="pill" onclick="setCM('${m}',this)">${m.replace(' 2026','').replace(' 2025','')}</button>`).join('');
+    }
+    popSelects();
+    popOutDates();
+    rSum();
+  } catch(e) {
+    showLoadError('Failed to load data: ' + e.message);
+  }
+  showSpinner(false);
+}
+init();
+</script>
+
+<!-- LOADING SPINNER -->
+<div id="spinner" style="position:fixed;inset:0;background:rgba(13,17,23,.92);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px">
+  <div style="width:48px;height:48px;border:3px solid #30363d;border-top-color:#388bfd;border-radius:50%;animation:spin 0.8s linear infinite"></div>
+  <div style="color:#8b949e;font-size:13px;font-family:Inter,sans-serif">Loading live data from Google Sheets...</div>
+  <div id="load-error" style="color:#f47067;font-size:12px;display:none;max-width:400px;text-align:center"></div>
+  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+</div>
+</body>
+</html>
