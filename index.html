@@ -691,7 +691,7 @@ function showLoadError(msg) {
 
 // ── LOADING OVERLAY ───────────────────────────────
 function showSpinner(show) {
-  document.getElementById('spinner').style.display = show ? 'flex' : 'none';
+  try{const _s=document.getElementById('spinner');if(_s)_s.style.display=show?'flex':'none';}catch(e){}
 }
 
 
